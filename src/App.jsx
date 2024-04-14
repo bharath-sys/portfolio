@@ -1,24 +1,20 @@
 import * as React from "react";
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
-import "./index.css"; 
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import "./index.css";
 import {
   ChakraBaseProvider,
   extendBaseTheme,
   theme as chakraTheme,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react";
 import Home from "./Components/Home";
-import {
-  QueryClient,
-  QueryClientProvider,
-} from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ContentBox from "./Components/ContentBox";
-const { Button } = chakraTheme.components
+import theme from "./theme";
+// import dotenv from 'dotenv';
+const { Button } = chakraTheme.components;
 
-const theme = extendBaseTheme({
-  
-})
-
-const queryClient = new QueryClient()
+// dotenv.config();
+const queryClient = new QueryClient();
 
 function App() {
   return (
@@ -26,7 +22,7 @@ function App() {
       <ChakraBaseProvider theme={theme}>
         <Router>
           <Routes>
-            <Route path="/" element={<Home />} >
+            <Route path="/" element={<Home />}>
               <Route path=":action" element={<ContentBox />} />
             </Route>
           </Routes>

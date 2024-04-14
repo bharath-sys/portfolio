@@ -1,19 +1,19 @@
 import React from 'react';
 import Typewriter from 'typewriter-effect';
 
-function TypingEffect({text}) {
+function TypingEffect({text,isLoading}) {
 
   return (
-    <div>
+    <>
         <Typewriter
           options={{
             strings: text,
-            autoStart: true,
+            autoStart: !isLoading,
             loop: true,
             cursor:'...'
           }}
         />
-    </div>
+    </>
   );
 }
 

@@ -54,7 +54,6 @@ const MenuLinks = ({ isOpen }) => {
             >
                 <Link to={"/about"}>About</Link>
                 <Link to={"/experience"}>Experience</Link>
-                <Link to={"/skills"}>Skill Set</Link>
                 <Link to={"/education"}>Education</Link>
                 <Link to={"/contact"}>Contact</Link>
             </Stack>

@@ -1,20 +1,19 @@
-import db from '../FireBase/main.js'
-import { collection, onSnapshot } from 'firebase/firestore';
-export const fetchData = async () => {
-    return new Promise((resolve, reject) => {
-        const unsubscribe = onSnapshot(collection(db, 'PersonalDetails'), (snapShot) => {
-            const newData = snapShot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            console.log(newData);
-            resolve(newData);
-        }, error => {
-            reject(error);
-        });
+import db from './main.js';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
-        // Cleanup function to unsubscribe from snapshot listener
-        return () => unsubscribe();
-    });
+export const fetchDataByCondition = async (params) => {
+    const collectionRef = collection(db, params?.collection);
+    const dbquery = query(collectionRef, where("page", "==", params?.page));
+
+    try {
+        const snapShot = await getDocs(dbquery);
+        const newData = snapShot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        return newData;
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        throw error;
+    }
 }
-
