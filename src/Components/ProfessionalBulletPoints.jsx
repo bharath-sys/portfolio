@@ -1,48 +1,53 @@
-import { List, ListItem, Box, Text, Flex } from "@chakra-ui/react";
+import { List, ListItem, Box, Text, Flex, Icon, useColorMode } from "@chakra-ui/react";
+import { motion } from "framer-motion";
+import { MdCheckCircle } from "react-icons/md";
 
-// Define common styles
-const commonDotStyle = {
-  w: "6px",
-  h: "6px",
-  bg: "red.500",
-  borderRadius: "50%",
-  display: "inline-block",
-  mr: "2",
-};
+const MotionListItem = motion(ListItem);
 
-// Common styles for font
-const commonFontStyle = {
-  // fontFamily: "monospace",
-  fontSize: ["xs", "sm", "sm"],
-};
+const ProfessionalBulletPoints = ({ data }) => {
+  const { colorMode } = useColorMode();
 
-const ProfessionalBulletPoints = () => {
+  if (!data || !Array.isArray(data)) return null;
+
   return (
     <List spacing={4}>
-      <ListItem>
-        <Flex alignItems={"center"} gap={3}>
-          <Box {...commonDotStyle} />
-          <Text {...commonFontStyle}>
-            Worked In Company Central Database Management and Ticketing System.
-          </Text>
-        </Flex>
-      </ListItem>
-      <ListItem>
-        <Flex alignItems={"center"} gap={3}>
-          <Box {...commonDotStyle} />
-          <Text {...commonFontStyle}>
-            Built Dynamic UI, Robust Backend for Company Products
-          </Text>
-        </Flex>
-      </ListItem>
-      <ListItem>
-        <Flex alignItems={"center"} gap={3}>
-          <Box {...commonDotStyle} />
-          <Text {...commonFontStyle}>
-            Specialized in MERN stack devlopment
-          </Text>
-        </Flex>
-      </ListItem>
+      {data.map((point, index) => (
+        <MotionListItem
+          key={index}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 * index }}
+        >
+          <Flex align="start" gap={4}>
+            <Box
+              mt={0.5}
+              flexShrink={0}
+              w={6}
+              h={6}
+              borderRadius="full"
+              bg={colorMode === 'dark' ? "rgba(0, 113, 227, 0.15)" : "rgba(0, 113, 227, 0.1)"}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Icon
+                as={MdCheckCircle}
+                color="#0071e3"
+                w={4}
+                h={4}
+              />
+            </Box>
+            <Text
+              fontSize="17px"
+              color={colorMode === 'dark' ? "rgba(245, 245, 247, 0.85)" : "rgba(29, 29, 31, 0.85)"}
+              lineHeight="1.6"
+              fontWeight="400"
+            >
+              {point}
+            </Text>
+          </Flex>
+        </MotionListItem>
+      ))}
     </List>
   );
 };

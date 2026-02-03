@@ -1,13 +1,16 @@
-import { Box, Skeleton, SkeletonText } from "@chakra-ui/react";
+import { Box, Skeleton, SkeletonText, useColorMode } from "@chakra-ui/react";
 import React from "react";
 
 const SkeletonWrapper = ({ isText, isLoading, children }) => {
-  const initialColor = "#F7F7F7"; // Light gray
-  const endColor = "#E0E0E0"; // Slightly darker gray
+  const { colorMode } = useColorMode();
+
+  const startColor = colorMode === 'dark' ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)";
+  const endColor = colorMode === 'dark' ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)";
+
   const component = isText ? (
     <Box>
       <SkeletonText
-        startColor={initialColor}
+        startColor={startColor}
         endColor={endColor}
         isLoaded={!isLoading}
         noOfLines={1}
@@ -18,7 +21,7 @@ const SkeletonWrapper = ({ isText, isLoading, children }) => {
     </Box>
   ) : (
     <Skeleton
-      startColor={initialColor}
+      startColor={startColor}
       endColor={endColor}
       isLoaded={!isLoading}
       skeletonHeight="5"

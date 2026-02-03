@@ -1,92 +1,124 @@
-import React, { useEffect, useState } from "react";
-import { Box, Text, Stack, Flex, Icon } from "@chakra-ui/react";
+import React, { useState } from "react";
+import { Box, Text, Stack, Flex, Icon, IconButton, Collapse } from "@chakra-ui/react";
 import { MdClose, MdMenu } from "react-icons/md";
-import { Navigate, useParams } from "react-router-dom";
-import { Link } from "react-router-dom";
-import { useBreakpointValue } from "@chakra-ui/react";
-import "../index.css"; 
+import { Link, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
+import ColorModeToggle from "./ColorModeToggle";
+
+const MotionFlex = motion(Flex);
 
 const Logo = () => {
     return (
-        <Box>
-            <Text fontSize="lg" fontWeight="bold" color="black">
-                <Link to={"/"}>Bharath Kumar</Link>
-            </Text>
-        </Box>
+        <Text
+            fontSize="21px"
+            fontWeight="600"
+            color="inherit"
+            letterSpacing="-0.01em"
+        >
+            <Link to={"/"}>Bharath Kumar</Link>
+        </Text>
     );
 };
 
 const MenuToggle = ({ toggle, isOpen }) => {
     return (
-        <Box display={{ base: "block", md: "none" }} onClick={toggle}>
-            {isOpen ? <Icon as={MdClose} /> : <Icon as={MdMenu} />}
-        </Box>
+        <IconButton
+            display={{ base: "flex", md: "none" }}
+            onClick={toggle}
+            icon={<Icon as={isOpen ? MdClose : MdMenu} w={6} h={6} />}
+            variant="ghost"
+            aria-label="Toggle menu"
+            color="inherit"
+            _hover={{ bg: "rgba(0, 113, 227, 0.1)" }}
+        />
     );
 };
 
+const NavLink = ({ to, children, onClick }) => {
+    const location = useLocation();
+    const isActive = location.pathname === to;
 
-
-const MenuLinks = ({ isOpen }) => {
-    const backgroundColor = useBreakpointValue({ base: "white", lg: "transparent",md: "transparent"});
-    // const fontColor = useBreakpointValue({ base:"white", lg: "black", md: "black"});
-    const borderRadius = useBreakpointValue({ base: "10px", lg: 0, md: 0 });
     return (
-        <Box
-            display={{ base: isOpen ? "block" : "none", md: "block" }}
-            flexBasis={{ base: "100%", md: "auto" }}
-            position={{ base: "fixed", md: "static" }}
-            top="18" // Ensure it starts from the top of the viewport
-            right="20" // Ensure it starts from the left of the viewport
-            zIndex="10" // Set a higher z-index to ensure it appears on top
-        >
-            <Stack
-                spacing={8}
-                minW={"150px"}
-                minH={"50px"}
-                align="center"
-                justify={["center", "space-between", "flex-end"]}
-                direction={["column","row"]}
-                paddingTop={[4, 4, 0]}
-                opacity={100}
-                backgroundColor={backgroundColor}
-                borderRadius={borderRadius}
-                color={"black"}
+        <Link to={to} onClick={onClick}>
+            <Text
+                fontSize="12px"
+                fontWeight={isActive ? "600" : "400"}
+                color={isActive ? "inherit" : "gray.500"}
+                transition="color 0.3s ease"
+                _hover={{ color: "inherit" }}
+                letterSpacing="0.01em"
+                textTransform="uppercase"
             >
-                <Link to={"/about"}>About</Link>
-                <Link to={"/experience"}>Experience</Link>
-                <Link to={"/education"}>Education</Link>
-                <Link to={"/contact"}>Contact</Link>
-            </Stack>
-        </Box>
+                {children}
+            </Text>
+        </Link>
     );
 };
 
-const NavBarContainer = ({ children }) => {
+const MenuLinks = ({ isOpen, onClose }) => {
     return (
-        <Flex
-            as="nav"
+        <Collapse in={isOpen} animateOpacity>
+            <Box
+                display={{ base: "block", md: "none" }}
+                pb={4}
+                pt={4}
+            >
+                <Stack spacing={4} align="center">
+                    <NavLink to="/about" onClick={onClose}>Projects</NavLink>
+                    <NavLink to="/experience" onClick={onClose}>Experience</NavLink>
+                    <NavLink to="/education" onClick={onClose}>Education</NavLink>
+                    <NavLink to="/contact" onClick={onClose}>Contact</NavLink>
+                </Stack>
+            </Box>
+        </Collapse>
+    );
+};
+
+const DesktopMenuLinks = () => {
+    return (
+        <Stack
+            spacing={8}
             align="center"
-            justify="space-between"
-            wrap="wrap"
-            width="100%"
-            padding={8}
-            bg={"transparent"}
-            color={"gray.600"}
+            direction="row"
+            display={{ base: "none", md: "flex" }}
         >
-            {children}
-        </Flex>
+            <NavLink to="/about">About</NavLink>
+            <NavLink to="/experience">Experience</NavLink>
+            <NavLink to="/education">Education</NavLink>
+            <NavLink to="/contact">Contact</NavLink>
+        </Stack>
     );
 };
 
 function Header() {
     const [isOpen, setIsOpen] = useState(false);
     const toggleMenu = () => setIsOpen(!isOpen);
+    const closeMenu = () => setIsOpen(false);
+
     return (
-        <NavBarContainer>
-            <Logo />
-            <MenuToggle toggle={toggleMenu} isOpen={isOpen} />
-            <MenuLinks isOpen={isOpen} />
-        </NavBarContainer>
+        <Box w="100%">
+            <MotionFlex
+                as="nav"
+                align="center"
+                justify="space-between"
+                w="100%"
+                maxW="980px"
+                mx="auto"
+                px={{ base: 6, md: 8 }}
+                py={5}
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6 }}
+            >
+                <Logo />
+                <Flex align="center" gap={4}>
+                    <DesktopMenuLinks />
+                    <ColorModeToggle />
+                    <MenuToggle toggle={toggleMenu} isOpen={isOpen} />
+                </Flex>
+            </MotionFlex>
+            <MenuLinks isOpen={isOpen} onClose={closeMenu} />
+        </Box>
     );
 }
 
