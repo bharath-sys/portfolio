@@ -8,8 +8,8 @@ const MotionBox = motion(Box);
 const ResumeSection = () => {
     const { colorMode } = useColorMode();
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const resumeUrl = "https://drive.google.com/file/d/1Ob-FC73O9aBVgGB4vFQV8vlIVtXHd1JO/view";
-    const embedUrl = "https://drive.google.com/file/d/1Ob-FC73O9aBVgGB4vFQV8vlIVtXHd1JO/preview";
+    const resumeUrl = "https://drive.google.com/file/d/1Oz6JUn_4-IRcxHcGIITc6xKoWcXVZP_M//view";
+    const embedUrl = "https://drive.google.com/file/d/1Oz6JUn_4-IRcxHcGIITc6xKoWcXVZP_M//preview";
 
     return (
         <>
