@@ -1,33 +1,31 @@
-import * as React from "react";
-import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
-import "./index.css";
-import {
-  ChakraBaseProvider,
-  extendBaseTheme,
-  theme as chakraTheme,
-} from "@chakra-ui/react";
-import Home from "./Components/Home";
+import React from "react";
+import { ChakraProvider } from "@chakra-ui/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import ContentBox from "./Components/ContentBox";
+import "./index.css";
 import theme from "./theme";
-// import dotenv from 'dotenv';
-const { Button } = chakraTheme.components;
+import Home from "./Components/Home";
 
-// dotenv.config();
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
+/**
+ * Single-page portfolio — no router. Every section lives on one document and
+ * the header scrolls between anchors, so there are no route transitions to
+ * pay for and the whole page is one continuous read.
+ */
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ChakraBaseProvider theme={theme}>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Home />}>
-              <Route path=":action" element={<ContentBox />} />
-            </Route>
-          </Routes>
-        </Router>
-      </ChakraBaseProvider>
+      <ChakraProvider theme={theme}>
+        <Home />
+      </ChakraProvider>
     </QueryClientProvider>
   );
 }

@@ -1,30 +1,329 @@
-html {
-  scroll-behavior: smooth;
+/* ==========================================================================
+   BK — Design System / Global Layer
+   Neo-brutalist · terminal-dev · dark-first
+   ========================================================================== */
+
+/* ---------- Tokens ---------- */
+
+:root {
+  --acid: #ccff00;
+  --acid-ink: #08080a;
+  --violet: #7c5cff;
+  --flare: #ff4d3d;
+  --cyan: #4de3ff;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --nav-h: 68px;
+  --maxw: 1240px;
+
+  --font-display: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
 }
 
-body {
-  margin: 0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Light is the default palette (:root), dark is opt-in via the toggle. */
+:root,
+body.chakra-ui-light {
+  --bg: #f3f3ef;
+  --bg-alt: #e9e9e2;
+  --surface: rgba(0, 0, 0, 0.025);
+  --surface-2: rgba(0, 0, 0, 0.05);
+  --surface-3: rgba(0, 0, 0, 0.08);
+  --line: rgba(0, 0, 0, 0.14);
+  --line-2: rgba(0, 0, 0, 0.24);
+  --line-strong: rgba(0, 0, 0, 0.55);
+  --fg: #0b0b0c;
+  --fg-dim: #4a4a52;
+  --fg-mute: #74747f;
+  --grid: rgba(0, 0, 0, 0.05);
+  --accent-text: #4f6b00;
+  --glow: rgba(124, 92, 255, 0.08);
+  --shadow-hard: 6px 6px 0 0 rgba(0, 0, 0, 0.85);
+  --scanline-opacity: 0.014;
 }
+
+body.chakra-ui-dark {
+  --bg: #08080a;
+  --bg-alt: #0d0d10;
+  --surface: rgba(255, 255, 255, 0.028);
+  --surface-2: rgba(255, 255, 255, 0.055);
+  --surface-3: rgba(255, 255, 255, 0.085);
+  --line: rgba(255, 255, 255, 0.1);
+  --line-2: rgba(255, 255, 255, 0.18);
+  --line-strong: rgba(255, 255, 255, 0.32);
+  --fg: #f2f2f4;
+  --fg-dim: #a0a0ab;
+  --fg-mute: #6b6b78;
+  --grid: rgba(255, 255, 255, 0.042);
+  --accent-text: #ccff00;
+  --glow: rgba(204, 255, 0, 0.09);
+  --shadow-hard: 6px 6px 0 0 rgba(255, 255, 255, 0.14);
+  --scanline-opacity: 0.018;
+}
+
+/* ---------- Reset ---------- */
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  transition: background-color 0.45s var(--ease-out), color 0.45s var(--ease-out);
+}
+
+img {
+  max-width: 100%;
+}
+
+/* ---------- Selection ---------- */
+
+::selection {
+  background: var(--acid);
+  color: var(--acid-ink);
+}
+
+/* ---------- Scrollbar ---------- */
+
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-alt);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  background: var(--line-2);
+  border: 2px solid var(--bg-alt);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--acid);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* ---------- Focus ---------- */
+
+:focus-visible {
+  outline: 2px solid var(--acid);
+  outline-offset: 3px;
+}
+
+/* ---------- Backdrop (static — zero JS, zero repaint) ---------- */
+
+/*
+ * Terminal backdrop. Everything here is a single painted layer that never
+ * animates, so the compositor can cache it and scrolling stays at 60fps.
+ * No blur filters, no canvas, no requestAnimationFrame.
+ */
+.bk-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--bg);
+  background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* faint scanlines — 4px repeating gradient, static */
+.bk-scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--scanline-opacity);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--fg) 0px,
+    var(--fg) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+}
+
+/* top glow so the hero doesn't sit on a flat plane — static gradient */
+.bk-glowtop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 80% 50% at 50% -10%,
+    var(--glow) 0%,
+    transparent 60%
+  );
+}
+
+/* ---------- Cursor (transform-only, no RAF) ---------- */
+
+@media (hover: hover) and (pointer: fine) {
+  body.bk-cursor-on,
+  body.bk-cursor-on * {
+    cursor: none !important;
+  }
+}
+
+.bk-cursor-dot,
+.bk-cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  pointer-events: none;
+  will-change: transform;
+  contain: strict;
+}
+
+.bk-cursor-dot {
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  background: var(--acid);
+}
+
+/* the ring trails via a CSS transition — the compositor does the easing,
+   so there is no per-frame JavaScript at all */
+.bk-cursor-ring {
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border: 1px solid var(--line-strong);
+  transition: transform 0.09s linear, width 0.18s var(--ease-out),
+    height 0.18s var(--ease-out), margin 0.18s var(--ease-out),
+    border-color 0.18s var(--ease-out);
+}
+
+.bk-cursor-ring[data-hot="true"] {
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-color: var(--acid);
+}
+
+/* ---------- Marquee ---------- */
+
+.bk-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 38s linear infinite;
+}
+
+.bk-marquee-rev {
+  animation-direction: reverse;
+}
+
+.bk-marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+/* ---------- Text effects ---------- */
+
+.bk-outline-text {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--line-strong);
+}
+
+.bk-underline-sweep {
+  background-image: linear-gradient(var(--acid), var(--acid));
+  background-repeat: no-repeat;
+  background-size: 0% 2px;
+  background-position: 0 100%;
+  transition: background-size 0.45s var(--ease-out);
+}
+
+.bk-underline-sweep:hover {
+  background-size: 100% 2px;
+}
+
+/* ---------- Utility ---------- */
+
+.bk-hatch {
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--line) 0,
+    var(--line) 1px,
+    transparent 1px,
+    transparent 7px
+  );
+}
+
+.bk-caret::after {
+  content: "";
+  display: inline-block;
+  width: 0.5em;
+  height: 1em;
+  margin-left: 0.1em;
+  background: var(--acid);
+  vertical-align: -0.14em;
+  animation: caretBlink 1.05s steps(1) infinite;
+}
+
+@keyframes caretBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes bkPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.75); }
+}
+
+@keyframes bkSpinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .bk-scanlines {
+    display: none;
+  }
 }

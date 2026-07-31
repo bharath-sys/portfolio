@@ -1,247 +1,311 @@
-import React from 'react';
-import { Box, Flex, Heading, Text, SimpleGrid, Icon, useColorMode, Link } from '@chakra-ui/react';
-import { motion } from 'framer-motion';
-import { SiLeetcode, SiGeeksforgeeks, SiGithub } from 'react-icons/si';
-import { MdCode, MdCheckCircle } from 'react-icons/md';
+import React from "react";
+import { Box, Flex, Grid, Text } from "@chakra-ui/react";
+import { SiGeeksforgeeks, SiGithub, SiLeetcode } from "react-icons/si";
+import { MdArrowOutward } from "react-icons/md";
+import { Label, LiveDot, Reveal, TerminalCard, TerminalRow } from "./ui";
+import {
+  GFG_USER,
+  GITHUB_USER,
+  LEETCODE_USER,
+  useGitHubStats,
+  useLeetCodeStats,
+} from "../lib/useLiveStats";
+import { GFG, LEETCODE } from "../config/profileStats";
 
-const MotionBox = motion(Box);
+/*
+ * GitHub and LeetCode are fetched from their public APIs on load; if a call
+ * fails the card falls back to the recorded figures in config/profileStats.js.
+ * GeeksforGeeks has no public API, so it always reads from config.
+ */
 
-const ActivityCalendar = ({ colorMode }) => {
-    // Generate 8 weeks of activity data (reduced for better fit)
-    const weeks = 8;
-    const daysPerWeek = 7;
+/* ----------------------------------------------------------------- bits --- */
 
-    const getRandomActivity = () => {
-        const rand = Math.random();
-        if (rand > 0.7) return 4;
-        if (rand > 0.5) return 3;
-        if (rand > 0.3) return 2;
-        if (rand > 0.15) return 1;
-        return 0;
-    };
+const Stat = ({ value, label, color, loading }) => (
+  <Box>
+    <Text
+      fontFamily="var(--font-display)"
+      fontSize={{ base: "1.8rem", md: "2.1rem" }}
+      fontWeight="700"
+      lineHeight="1"
+      letterSpacing="-0.04em"
+      color={color}
+      sx={{ fontVariantNumeric: "tabular-nums" }}
+    >
+      {loading ? "··" : typeof value === "number" ? value.toLocaleString() : value}
+    </Text>
+    <Text textStyle="label" fontSize="9px" mt={2}>
+      {label}
+    </Text>
+  </Box>
+);
 
-    const getColor = (level) => {
-        if (colorMode === 'dark') {
-            const colors = [
-                'rgba(255, 255, 255, 0.03)',
-                'rgba(0, 113, 227, 0.3)',
-                'rgba(0, 113, 227, 0.5)',
-                'rgba(0, 113, 227, 0.7)',
-                'rgba(0, 113, 227, 0.9)',
-            ];
-            return colors[level];
-        } else {
-            const colors = [
-                'rgba(0, 0, 0, 0.03)',
-                'rgba(0, 113, 227, 0.2)',
-                'rgba(0, 113, 227, 0.4)',
-                'rgba(0, 113, 227, 0.6)',
-                'rgba(0, 113, 227, 0.8)',
-            ];
-            return colors[level];
-        }
-    };
-
-    return (
-        <Flex gap={1} justify="center" flexWrap="wrap" maxW="100%">
-            {Array.from({ length: weeks }).map((_, weekIndex) => (
-                <Flex key={weekIndex} direction="column" gap={1}>
-                    {Array.from({ length: daysPerWeek }).map((_, dayIndex) => {
-                        const activity = getRandomActivity();
-                        return (
-                            <MotionBox
-                                key={dayIndex}
-                                w="8px"
-                                h="8px"
-                                borderRadius="2px"
-                                bg={getColor(activity)}
-                                border="1px solid"
-                                borderColor={colorMode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}
-                                whileHover={{ scale: 1.3 }}
-                                transition={{ duration: 0.2 }}
-                            />
-                        );
-                    })}
-                </Flex>
-            ))}
-        </Flex>
-    );
+/** Stacked difficulty bar — proportions come straight from the numbers. */
+const DifficultyBar = ({ segments }) => {
+  const total = segments.reduce((s, [, v]) => s + v, 0) || 1;
+  return (
+    <Box>
+      <Flex h="6px" borderRadius="1px" overflow="hidden" mb={3}>
+        {segments.map(([label, value, color]) => (
+          <Box key={label} w={`${(value / total) * 100}%`} bg={color} />
+        ))}
+      </Flex>
+      <Flex gap={4} wrap="wrap">
+        {segments.map(([label, value, color]) => (
+          <Flex key={label} align="center" gap={1.5}>
+            <Box w="7px" h="7px" bg={color} borderRadius="1px" />
+            <Text fontSize="10.5px" color="var(--fg-mute)">
+              {label} {value}
+            </Text>
+          </Flex>
+        ))}
+      </Flex>
+    </Box>
+  );
 };
 
-const PlatformCard = ({ platform, icon, color, stats, url }) => {
-    const { colorMode } = useColorMode();
+const Source = ({ live, loading }) => (
+  <Flex
+    align="center"
+    gap={2}
+    mt={5}
+    pt={4}
+    borderTop="1px solid"
+    borderColor="var(--line)"
+  >
+    {live && <LiveDot />}
+    <Text
+      fontSize="10px"
+      letterSpacing="0.1em"
+      textTransform="uppercase"
+      color="var(--fg-mute)"
+    >
+      {loading ? "Fetching…" : live ? "Live from API" : "From profile"}
+    </Text>
+  </Flex>
+);
 
-    return (
-        <MotionBox
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            whileHover={{ y: -6 }}
+const CardHead = ({ icon: IconCmp, name, handle, color }) => (
+  <Flex align="center" justify="space-between" gap={3} mb={6}>
+    <Flex align="center" gap={3} minW={0}>
+      <Box as={IconCmp} fontSize="20px" color={color} flexShrink={0} />
+      <Box minW={0}>
+        <Text
+          fontFamily="var(--font-display)"
+          fontSize="16px"
+          fontWeight="700"
+          letterSpacing="-0.02em"
+          textTransform="uppercase"
+          lineHeight="1.1"
+          color="var(--fg)"
         >
-            <Link href={url} isExternal _hover={{ textDecoration: 'none' }}>
-                <Box
-                    p={5}
-                    bg={colorMode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)'}
-                    backdropFilter="blur(20px)"
-                    border="2px solid"
-                    borderColor={colorMode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'}
-                    borderRadius="18px"
-                    transition="all 0.3s ease"
-                    h="100%"
-                    _hover={{
-                        borderColor: color,
-                        boxShadow: `0 0 40px ${color}30`,
-                    }}
-                >
-                    <Flex align="center" gap={3} mb={3}>
-                        <Icon as={icon} w={6} h={6} color={color} />
-                        <Heading fontSize="20px" fontWeight="700" color="inherit">
-                            {platform}
-                        </Heading>
-                    </Flex>
+          {name}
+        </Text>
+        <Text textStyle="label" fontSize="9px" mt="3px" noOfLines={1}>
+          @{handle}
+        </Text>
+      </Box>
+    </Flex>
+    <Box
+      as={MdArrowOutward}
+      fontSize="17px"
+      color="var(--fg-mute)"
+      flexShrink={0}
+      transition="all .3s var(--ease-out)"
+      _groupHover={{ color, transform: "translate(4px,-4px)" }}
+    />
+  </Flex>
+);
 
-                    <SimpleGrid columns={2} spacing={3} mb={3}>
-                        {stats.map((stat, index) => (
-                            <Box key={index}>
-                                <Text fontSize="24px" fontWeight="700" color={color} mb={0.5}>
-                                    {stat.value}
-                                </Text>
-                                <Text fontSize="12px" color="gray.500" textTransform="uppercase" letterSpacing="0.05em">
-                                    {stat.label}
-                                </Text>
-                            </Box>
-                        ))}
-                    </SimpleGrid>
-
-                    <Box
-                        p={2.5}
-                        bg={colorMode === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.5)'}
-                        borderRadius="12px"
-                        mb={2}
-                    >
-                        <ActivityCalendar colorMode={colorMode} />
-                    </Box>
-
-                    <Text fontSize="11px" color="gray.500" textAlign="center">
-                        Activity pattern (simulated)
-                    </Text>
-                </Box>
-            </Link>
-        </MotionBox>
-    );
-};
+/* --------------------------------------------------------------- export --- */
 
 const CodingProfiles = () => {
-    const { colorMode } = useColorMode();
+  const gh = useGitHubStats();
+  const lc = useLeetCodeStats();
 
-    const leetcodeStats = [
-        { value: '500+', label: 'Problems' },
-        { value: '150+', label: 'Rating' },
-    ];
+  const lcLive = !!lc.data?.totalSolved;
+  const leet = lcLive ? { ...LEETCODE, ...lc.data } : LEETCODE;
 
-    const gfgStats = [
-        { value: '300+', label: 'Problems' },
-        { value: '5★', label: 'Rating' },
-    ];
+  const cardProps = (color) => ({
+    as: "a",
+    target: "_blank",
+    rel: "noopener noreferrer",
+    accent: color,
+    h: "100%",
+    display: "flex",
+    flexDirection: "column",
+    _hover: { borderColor: color, transform: "translateY(-3px)" },
+    bodyProps: { display: "flex", flexDirection: "column", flex: "1" },
+  });
 
-    const githubStats = [
-        { value: '50+', label: 'Repositories' },
-        { value: '200+', label: 'Contributions' },
-    ];
+  return (
+    <Box w="100%">
+      <Grid templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }} gap={5}>
+        {/* ----------------------------------------------------- LeetCode */}
+        <Reveal from="up">
+          <TerminalCard
+            {...cardProps("#FFA116")}
+            href={`https://leetcode.com/u/${LEETCODE_USER}/`}
+            path="~/profiles/leetcode"
+          >
+            <CardHead
+              icon={SiLeetcode}
+              name="LeetCode"
+              handle={LEETCODE_USER}
+              color="#FFA116"
+            />
 
-    return (
-        <Box w="100%">
-            <MotionBox
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                mb={6}
+            <Grid templateColumns="1fr 1fr" gap={5} mb={6}>
+              <Stat
+                value={leet.totalSolved}
+                label="Problems solved"
+                color="#FFA116"
+                loading={lc.isLoading}
+              />
+              <Stat
+                value={leet.mediumSolved}
+                label="Medium solved"
+                color="var(--fg)"
+                loading={lc.isLoading}
+              />
+            </Grid>
+
+            <Box mb={6}>
+              <DifficultyBar
+                segments={[
+                  ["Easy", leet.easySolved, "#00B8A3"],
+                  ["Medium", leet.mediumSolved, "#FFB800"],
+                  ["Hard", leet.hardSolved, "#FF375F"],
+                ]}
+              />
+            </Box>
+
+            <Box mt="auto">
+              <TerminalRow
+                label="active days / yr"
+                value={LEETCODE.activeDays}
+                accent
+              />
+              <TerminalRow
+                label="submissions / yr"
+                value={LEETCODE.submissionsPastYear}
+              />
+              <TerminalRow label="longest streak" value={`${LEETCODE.maxStreak} days`} last />
+            </Box>
+
+            <Source live={lcLive} loading={lc.isLoading} />
+          </TerminalCard>
+        </Reveal>
+
+        {/* ---------------------------------------------------------- GFG */}
+        <Reveal from="up" delay={0.07}>
+          <TerminalCard
+            {...cardProps("#2F8D46")}
+            href={`https://www.geeksforgeeks.org/user/${GFG_USER}/`}
+            path="~/profiles/geeksforgeeks"
+          >
+            <CardHead
+              icon={SiGeeksforgeeks}
+              name="GeeksforGeeks"
+              handle={GFG_USER}
+              color="#2F8D46"
+            />
+
+            <Grid templateColumns="1fr 1fr" gap={5} mb={6}>
+              <Stat value={GFG.totalSolved} label="Problems solved" color="#2F8D46" />
+              <Stat value={GFG.codingScore} label="Coding score" color="var(--fg)" />
+            </Grid>
+
+            <Box mb={6}>
+              <DifficultyBar
+                segments={[
+                  ["Basic", GFG.breakdown.basic, "#7CB342"],
+                  ["Easy", GFG.breakdown.easy, "#00B8A3"],
+                  ["Medium", GFG.breakdown.medium, "#FFB800"],
+                  ["Hard", GFG.breakdown.hard, "#FF375F"],
+                ]}
+              />
+            </Box>
+
+            <Box mt="auto">
+              <TerminalRow label="institute rank" value={`#${GFG.instituteRank}`} accent />
+              <TerminalRow label="institute" value={GFG.institute} last />
+            </Box>
+
+            <Source live={false} />
+          </TerminalCard>
+        </Reveal>
+
+        {/* ------------------------------------------------------- GitHub */}
+        <Reveal from="up" delay={0.14}>
+          <TerminalCard
+            {...cardProps("#8B949E")}
+            href={`https://github.com/${GITHUB_USER}`}
+            path="~/profiles/github"
+          >
+            <CardHead icon={SiGithub} name="GitHub" handle={GITHUB_USER} color="#8B949E" />
+
+            <Grid templateColumns="1fr 1fr" gap={5} mb={6}>
+              <Stat
+                value={gh.data?.publicRepos ?? "—"}
+                label="Public repos"
+                color="var(--fg)"
+                loading={gh.isLoading}
+              />
+              <Stat
+                value={
+                  gh.data?.memberSince ? gh.data.memberSince.getFullYear() : "—"
+                }
+                label="On GitHub since"
+                color="var(--fg)"
+                loading={gh.isLoading}
+              />
+            </Grid>
+
+            <Text
+              fontFamily="var(--font-body)"
+              fontSize="14px"
+              lineHeight="1.6"
+              color="var(--fg-dim)"
+              mb={6}
             >
-                <Flex align="center" justify="center" gap={3} mb={2}>
-                    <Icon as={MdCode} w={7} h={7} color="#0071e3" />
-                    <Heading
-                        fontSize={{ base: "24px", md: "32px" }}
-                        fontWeight="700"
-                        textAlign="center"
-                        color="inherit"
-                        letterSpacing="-0.01em"
-                    >
-                        Coding Profiles
-                    </Heading>
-                </Flex>
-                <Text
-                    fontSize="15px"
-                    color="gray.500"
-                    textAlign="center"
-                    maxW="600px"
-                    mx="auto"
-                >
-                    Consistent problem-solving across platforms
-                </Text>
-            </MotionBox>
-
-            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={4}>
-                <PlatformCard
-                    platform="LeetCode"
-                    icon={SiLeetcode}
-                    color="#FFA116"
-                    stats={leetcodeStats}
-                    url="https://leetcode.com/u/k_b_k_bharath/"
-                />
-                <PlatformCard
-                    platform="GeeksforGeeks"
-                    icon={SiGeeksforgeeks}
-                    color="#2F8D46"
-                    stats={gfgStats}
-                    url="https://www.geeksforgeeks.org/user/bharathkumar41/"
-                />
-                <PlatformCard
-                    platform="GitHub"
-                    icon={SiGithub}
-                    color={colorMode === 'dark' ? '#ffffff' : '#181717'}
-                    stats={githubStats}
-                    url="https://github.com/bharath-sys"
-                />
-            </SimpleGrid>
-
-            {/* Additional Stats */}
-            <MotionBox
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-            >
-                <Flex
-                    p={4}
-                    bg={colorMode === 'dark' ? 'rgba(0, 113, 227, 0.05)' : 'rgba(0, 113, 227, 0.03)'}
-                    borderRadius="18px"
-                    border="1px solid"
-                    borderColor={colorMode === 'dark' ? 'rgba(0, 113, 227, 0.2)' : 'rgba(0, 113, 227, 0.15)'}
-                    align="center"
-                    justify="center"
-                    gap={6}
-                    flexWrap="wrap"
-                >
-                    <Flex align="center" gap={2}>
-                        <Icon as={MdCheckCircle} w={4} h={4} color="#0071e3" />
-                        <Text fontSize="15px" fontWeight="600" color="inherit">
-                            800+ Total Problems
-                        </Text>
-                    </Flex>
-                    <Flex align="center" gap={2}>
-                        <Icon as={MdCode} w={4} h={4} color="#0071e3" />
-                        <Text fontSize="15px" fontWeight="600" color="inherit">
-                            Active Daily Coder
-                        </Text>
-                    </Flex>
-                </Flex>
-            </MotionBox>
-
-            {/* Note about data */}
-            <Text fontSize="12px" color="gray.500" textAlign="center" mt={3} fontStyle="italic">
-                Note: Stats are manually updated. Activity patterns are simulated for visual representation.
+              Source for the projects above, plus the smaller experiments that
+              don&apos;t make the portfolio.
             </Text>
-        </Box>
-    );
+
+            <Box mt="auto">
+              <TerminalRow label="primary" value="JavaScript · TypeScript" />
+              <TerminalRow label="focus" value="React · Node · tooling" last />
+            </Box>
+
+            <Source live={!!gh.data} loading={gh.isLoading} />
+          </TerminalCard>
+        </Reveal>
+      </Grid>
+
+      <Reveal from="fade" delay={0.15}>
+        <Flex
+          mt={5}
+          px={{ base: 5, md: 6 }}
+          py={4}
+          border="1px dashed"
+          borderColor="var(--line)"
+          borderRadius="2px"
+          justify="space-between"
+          align="center"
+          gap={3}
+          wrap="wrap"
+        >
+          <Label>
+            {LEETCODE.totalSolved + GFG.totalSolved} problems solved across both
+            platforms
+          </Label>
+          <Text textStyle="label" fontSize="9px" color="var(--fg-mute)">
+            GitHub &amp; LeetCode fetched live on load
+          </Text>
+        </Flex>
+      </Reveal>
+    </Box>
+  );
 };
 
 export default CodingProfiles;

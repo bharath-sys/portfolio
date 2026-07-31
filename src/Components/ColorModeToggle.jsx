@@ -1,31 +1,51 @@
-import React from 'react';
-import { IconButton, useColorMode, Tooltip } from '@chakra-ui/react';
-import { MdLightMode, MdDarkMode } from 'react-icons/md';
-import { motion } from 'framer-motion';
+import React from "react";
+import { Box, Flex, Tooltip, useColorMode } from "@chakra-ui/react";
+import { MdDarkMode, MdLightMode } from "react-icons/md";
 
-const MotionIconButton = motion(IconButton);
-
+/**
+ * Brutalist two-state switch — a bordered track with a hard-edged knob.
+ */
 const ColorModeToggle = () => {
-    const { colorMode, toggleColorMode } = useColorMode();
+  const { colorMode, toggleColorMode } = useColorMode();
+  const dark = colorMode === "dark";
 
-    return (
-        <Tooltip label={`Switch to ${colorMode === 'dark' ? 'light' : 'dark'} mode`}>
-            <MotionIconButton
-                aria-label="Toggle color mode"
-                icon={colorMode === 'dark' ? <MdLightMode /> : <MdDarkMode />}
-                onClick={toggleColorMode}
-                size="md"
-                variant="ghost"
-                color={colorMode === 'dark' ? '#f5f5f7' : '#1d1d1f'}
-                _hover={{
-                    bg: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                }}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-            />
-        </Tooltip>
-    );
+  return (
+    <Tooltip label={dark ? "Light mode" : "Dark mode"} openDelay={400}>
+      <Flex
+        as="button"
+        type="button"
+        aria-label="Toggle colour mode"
+        onClick={toggleColorMode}
+        w="54px"
+        h="28px"
+        p="2px"
+        align="center"
+        position="relative"
+        border="1px solid"
+        borderColor="var(--line-2)"
+        borderRadius="2px"
+        bg="var(--surface)"
+        transition="border-color .3s"
+        _hover={{ borderColor: "var(--acid)" }}
+        flexShrink={0}
+      >
+        <Flex
+          w="22px"
+          h="22px"
+          align="center"
+          justify="center"
+          bg="var(--acid)"
+          color="var(--acid-ink)"
+          borderRadius="1px"
+          transform={dark ? "translateX(0)" : "translateX(26px)"}
+          transition="transform .4s var(--ease-out)"
+          fontSize="13px"
+        >
+          <Box as={dark ? MdDarkMode : MdLightMode} />
+        </Flex>
+      </Flex>
+    </Tooltip>
+  );
 };
 
 export default ColorModeToggle;

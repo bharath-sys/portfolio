@@ -1,116 +1,74 @@
-import React, { useEffect, useRef } from 'react';
-import { Box } from '@chakra-ui/react';
-import { useColorMode } from '@chakra-ui/react';
+import React, { useEffect, useRef } from "react";
+import { isFinePointer } from "../lib/hooks";
 
-const CursorMesh = () => {
-    const canvasRef = useRef(null);
-    const { colorMode } = useColorMode();
-    const mousePos = useRef({ x: 0, y: 0 });
-    const targetPos = useRef({ x: 0, y: 0 });
+const HOT_SELECTOR =
+  'a,button,[role="button"],input,textarea,select,[data-cursor="hot"]';
 
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+/**
+ * Custom cursor — one passive mousemove listener, two transform writes.
+ *
+ * There is no requestAnimationFrame loop and no React state: the dot snaps
+ * to the pointer instantly and the ring trails it via a short CSS transition,
+ * so the easing runs on the compositor rather than the main thread. That makes
+ * the cursor feel immediate no matter how busy the page is.
+ */
+const Cursor = () => {
+  const dotRef = useRef(null);
+  const ringRef = useRef(null);
 
-        const ctx = canvas.getContext('2d');
-        let animationFrameId;
+  useEffect(() => {
+    if (!isFinePointer()) return undefined;
 
-        const resizeCanvas = () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        };
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
+    const dot = dotRef.current;
+    const ring = ringRef.current;
+    if (!dot || !ring) return undefined;
 
-        const handleMouseMove = (e) => {
-            targetPos.current = { x: e.clientX, y: e.clientY };
-        };
-        window.addEventListener('mousemove', handleMouseMove);
+    document.body.classList.add("bk-cursor-on");
 
-        const lerp = (start, end, factor) => start + (end - start) * factor;
+    let shown = false;
+    let lastHot = null;
 
-        const animate = () => {
-            mousePos.current.x = lerp(mousePos.current.x, targetPos.current.x, 0.15);
-            mousePos.current.y = lerp(mousePos.current.y, targetPos.current.y, 0.15);
+    const onMove = (e) => {
+      const t = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+      dot.style.transform = t;
+      ring.style.transform = t;
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (!shown) {
+        shown = true;
+        dot.style.opacity = "1";
+        ring.style.opacity = "1";
+      }
 
-            // More visible professional glow
-            const gradient = ctx.createRadialGradient(
-                mousePos.current.x,
-                mousePos.current.y,
-                0,
-                mousePos.current.x,
-                mousePos.current.y,
-                200
-            );
+      // only touch the DOM when the hover state actually flips
+      const hot = e.target instanceof Element && !!e.target.closest(HOT_SELECTOR);
+      if (hot !== lastHot) {
+        lastHot = hot;
+        ring.dataset.hot = String(hot);
+      }
+    };
 
-            if (colorMode === 'dark') {
-                gradient.addColorStop(0, 'rgba(0, 113, 227, 0.15)');
-                gradient.addColorStop(0.5, 'rgba(0, 113, 227, 0.08)');
-                gradient.addColorStop(1, 'rgba(0, 113, 227, 0)');
-            } else {
-                gradient.addColorStop(0, 'rgba(0, 113, 227, 0.12)');
-                gradient.addColorStop(0.5, 'rgba(0, 113, 227, 0.06)');
-                gradient.addColorStop(1, 'rgba(0, 113, 227, 0)');
-            }
+    const hide = () => {
+      shown = false;
+      dot.style.opacity = "0";
+      ring.style.opacity = "0";
+    };
 
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+    window.addEventListener("mousemove", onMove, { passive: true });
+    document.addEventListener("mouseleave", hide);
 
-            // Add secondary layer for more visibility
-            const gradient2 = ctx.createRadialGradient(
-                mousePos.current.x,
-                mousePos.current.y,
-                0,
-                mousePos.current.x,
-                mousePos.current.y,
-                120
-            );
+    return () => {
+      document.body.classList.remove("bk-cursor-on");
+      window.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseleave", hide);
+    };
+  }, []);
 
-            if (colorMode === 'dark') {
-                gradient2.addColorStop(0, 'rgba(168, 85, 247, 0.1)');
-                gradient2.addColorStop(1, 'rgba(168, 85, 247, 0)');
-            } else {
-                gradient2.addColorStop(0, 'rgba(168, 85, 247, 0.08)');
-                gradient2.addColorStop(1, 'rgba(168, 85, 247, 0)');
-            }
-
-            ctx.fillStyle = gradient2;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            animationFrameId = requestAnimationFrame(animate);
-        };
-
-        animate();
-
-        return () => {
-            window.removeEventListener('resize', resizeCanvas);
-            window.removeEventListener('mousemove', handleMouseMove);
-            cancelAnimationFrame(animationFrameId);
-        };
-    }, [colorMode]);
-
-    return (
-        <Box
-            position="fixed"
-            top={0}
-            left={0}
-            width="100vw"
-            height="100vh"
-            zIndex={0}
-            pointerEvents="none"
-        >
-            <canvas
-                ref={canvasRef}
-                style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'block',
-                }}
-            />
-        </Box>
-    );
+  return (
+    <>
+      <div ref={ringRef} className="bk-cursor-ring" style={{ opacity: 0 }} aria-hidden />
+      <div ref={dotRef} className="bk-cursor-dot" style={{ opacity: 0 }} aria-hidden />
+    </>
+  );
 };
 
-export default CursorMesh;
+export default React.memo(Cursor);

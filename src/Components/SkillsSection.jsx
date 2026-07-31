@@ -1,158 +1,176 @@
-import React, { useEffect, useRef } from 'react';
-import { Box, Heading, Text, Icon, useColorMode } from '@chakra-ui/react';
-import { motion } from 'framer-motion';
+import React, { useState } from "react";
+import { Box, Flex, Grid, Text } from "@chakra-ui/react";
 import {
-    SiReact,
-    SiNodedotjs,
-    SiMongodb,
-    SiExpress,
-    SiJavascript,
-    SiTypescript,
-    SiDocker,
-    SiGit,
-    SiAmazonaws,
-    SiRedis
-} from 'react-icons/si';
+  SiAmazonaws,
+  SiDocker,
+  SiExpress,
+  SiGit,
+  SiGraphql,
+  SiJavascript,
+  SiJest,
+  SiKubernetes,
+  SiMongodb,
+  SiNextdotjs,
+  SiNodedotjs,
+  SiPostgresql,
+  SiReact,
+  SiRedis,
+  SiTailwindcss,
+  SiTypescript,
+} from "react-icons/si";
+import { Reveal } from "./ui";
 
-const MotionBox = motion(Box);
-
-const skills = [
-    { name: 'React', icon: SiReact, color: '#61DAFB' },
-    { name: 'Node.js', icon: SiNodedotjs, color: '#339933' },
-    { name: 'MongoDB', icon: SiMongodb, color: '#47A248' },
-    { name: 'Express', icon: SiExpress, color: '#000000' },
-    { name: 'JavaScript', icon: SiJavascript, color: '#F7DF1E' },
-    { name: 'TypeScript', icon: SiTypescript, color: '#3178C6' },
-    { name: 'Docker', icon: SiDocker, color: '#2496ED' },
-    { name: 'Git', icon: SiGit, color: '#F05032' },
-    { name: 'AWS', icon: SiAmazonaws, color: '#FF9900' },
-    { name: 'Redis', icon: SiRedis, color: '#DC382D' },
+const GROUPS = [
+  {
+    id: "frontend",
+    title: "Front end",
+    items: [
+      { name: "React", icon: SiReact, color: "#61DAFB" },
+      { name: "Next.js", icon: SiNextdotjs, color: "#FFFFFF" },
+      { name: "TypeScript", icon: SiTypescript, color: "#3178C6" },
+      { name: "JavaScript", icon: SiJavascript, color: "#F7DF1E" },
+      { name: "Tailwind", icon: SiTailwindcss, color: "#38BDF8" },
+    ],
+  },
+  {
+    id: "backend",
+    title: "Back end",
+    items: [
+      { name: "Node.js", icon: SiNodedotjs, color: "#3C873A" },
+      { name: "Express", icon: SiExpress, color: "#EDEDED" },
+      { name: "GraphQL", icon: SiGraphql, color: "#E535AB" },
+      { name: "MongoDB", icon: SiMongodb, color: "#47A248" },
+      { name: "PostgreSQL", icon: SiPostgresql, color: "#4169E1" },
+      { name: "Redis", icon: SiRedis, color: "#DC382D" },
+    ],
+  },
+  {
+    id: "platform",
+    title: "Platform",
+    items: [
+      { name: "AWS", icon: SiAmazonaws, color: "#FF9900" },
+      { name: "Docker", icon: SiDocker, color: "#2496ED" },
+      { name: "Kubernetes", icon: SiKubernetes, color: "#326CE5" },
+      { name: "Git", icon: SiGit, color: "#F05032" },
+      { name: "Jest", icon: SiJest, color: "#C21325" },
+    ],
+  },
 ];
 
-const SkillCard = ({ skill, index }) => {
-    const { colorMode } = useColorMode();
+const ALL = GROUPS.flatMap((g) => g.items);
 
-    return (
-        <MotionBox
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.05 }}
-            whileHover={{ y: -8, scale: 1.05 }}
-            flexShrink={0}
-            w="140px"
-        >
-            <Box
-                p={5}
-                bg={colorMode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)'}
-                backdropFilter="blur(20px)"
-                border="1px solid"
-                borderColor={colorMode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'}
-                borderRadius="18px"
-                textAlign="center"
-                transition="all 0.3s ease"
-                h="100%"
-                _hover={{
-                    borderColor: skill.color,
-                    boxShadow: `0 0 30px ${skill.color}40`,
-                }}
-            >
-                <Icon
-                    as={skill.icon}
-                    w={10}
-                    h={10}
-                    color={skill.color}
-                    mb={2}
-                />
-                <Text
-                    fontSize="15px"
-                    fontWeight="600"
-                    color="inherit"
-                >
-                    {skill.name}
-                </Text>
-            </Box>
-        </MotionBox>
-    );
-};
+/* Hover is pure CSS — no state, no listeners, so the whole grid is inert
+   until the pointer is actually over a cell. */
+const SkillCell = ({ skill, index }) => (
+  <Flex
+    role="group"
+    direction="column"
+    justify="space-between"
+    position="relative"
+    overflow="hidden"
+    aspectRatio="1 / 1"
+    p={{ base: 3, md: 4 }}
+    border="1px solid"
+    borderColor="var(--line)"
+    borderRadius="2px"
+    bg="var(--surface)"
+    color="var(--fg)"
+    transition="background-color .25s var(--ease-out), border-color .25s var(--ease-out), transform .25s var(--ease-out), color .25s var(--ease-out)"
+    _hover={{
+      bg: skill.color,
+      borderColor: skill.color,
+      color: "#0a0a0a",
+      transform: "translateY(-4px)",
+    }}
+  >
+    <Flex justify="space-between" align="flex-start">
+      <Box
+        as={skill.icon}
+        fontSize={{ base: "20px", md: "24px" }}
+        color={skill.color}
+        transition="color .25s"
+        _groupHover={{ color: "#0a0a0a" }}
+      />
+      <Text
+        fontFamily="var(--font-mono)"
+        fontSize="9px"
+        opacity={0.55}
+        letterSpacing="0.08em"
+      >
+        {String(index + 1).padStart(2, "0")}
+      </Text>
+    </Flex>
+    <Text
+      fontFamily="var(--font-mono)"
+      fontSize={{ base: "10px", md: "11px" }}
+      letterSpacing="0.06em"
+      textTransform="uppercase"
+      fontWeight={600}
+    >
+      {skill.name}
+    </Text>
+  </Flex>
+);
 
 const SkillsSection = () => {
-    const scrollRef = useRef(null);
-    const { colorMode } = useColorMode();
+  const [filter, setFilter] = useState("all");
+  const visible =
+    filter === "all" ? ALL : GROUPS.find((g) => g.id === filter)?.items || ALL;
 
-    useEffect(() => {
-        const scrollContainer = scrollRef.current;
-        if (!scrollContainer) return;
+  return (
+    <Box w="100%">
+      <Box>
+        <Reveal from="fade">
+          <Flex gap={2} mb={8} wrap="wrap">
+            {[{ id: "all", title: "Everything" }, ...GROUPS].map((g) => {
+              const active = filter === g.id;
+              return (
+                <Box
+                  key={g.id}
+                  as="button"
+                  type="button"
+                  onClick={() => setFilter(g.id)}
+                  px={4}
+                  py={2}
+                  border="1px solid"
+                  borderColor={active ? "var(--acid)" : "var(--line)"}
+                  bg={active ? "var(--acid)" : "transparent"}
+                  color={active ? "var(--acid-ink)" : "var(--fg-dim)"}
+                  borderRadius="2px"
+                  fontFamily="var(--font-mono)"
+                  fontSize="11px"
+                  letterSpacing="0.1em"
+                  textTransform="uppercase"
+                  transition="all .3s var(--ease-out)"
+                  _hover={
+                    active ? {} : { borderColor: "var(--line-strong)", color: "var(--fg)" }
+                  }
+                >
+                  {g.title}
+                </Box>
+              );
+            })}
+          </Flex>
+        </Reveal>
 
-        let scrollPosition = 0;
-        const scrollSpeed = 0.5;
-        let animationFrameId;
-
-        const autoScroll = () => {
-            scrollPosition += scrollSpeed;
-
-            if (scrollPosition >= scrollContainer.scrollWidth / 2) {
-                scrollPosition = 0;
-            }
-
-            scrollContainer.scrollLeft = scrollPosition;
-            animationFrameId = requestAnimationFrame(autoScroll);
-        };
-
-        animationFrameId = requestAnimationFrame(autoScroll);
-
-        const handleMouseEnter = () => {
-            cancelAnimationFrame(animationFrameId);
-        };
-
-        const handleMouseLeave = () => {
-            animationFrameId = requestAnimationFrame(autoScroll);
-        };
-
-        scrollContainer.addEventListener('mouseenter', handleMouseEnter);
-        scrollContainer.addEventListener('mouseleave', handleMouseLeave);
-
-        return () => {
-            cancelAnimationFrame(animationFrameId);
-            scrollContainer.removeEventListener('mouseenter', handleMouseEnter);
-            scrollContainer.removeEventListener('mouseleave', handleMouseLeave);
-        };
-    }, []);
-
-    const duplicatedSkills = [...skills, ...skills];
-
-    return (
-        <Box w="100%" mt={{ base: 8, md: 12 }} overflow="hidden">
-            <Heading
-                fontSize={{ base: "28px", md: "36px" }}
-                fontWeight="700"
-                mb={6}
-                textAlign="center"
-                color="inherit"
-                letterSpacing="-0.01em"
-            >
-                Tech Stack
-            </Heading>
-
-            <Box
-                ref={scrollRef}
-                display="flex"
-                gap={4}
-                overflowX="hidden"
-                py={4}
-                css={{
-                    '&::-webkit-scrollbar': {
-                        display: 'none',
-                    },
-                    scrollbarWidth: 'none',
-                    msOverflowStyle: 'none',
-                }}
-            >
-                {duplicatedSkills.map((skill, index) => (
-                    <SkillCard key={`${skill.name}-${index}`} skill={skill} index={index} />
-                ))}
-            </Box>
-        </Box>
-    );
+        <Grid
+          templateColumns={{
+            base: "repeat(3, 1fr)",
+            sm: "repeat(4, 1fr)",
+            md: "repeat(6, 1fr)",
+            lg: "repeat(8, 1fr)",
+          }}
+          gap={{ base: 2.5, md: 3 }}
+        >
+          {visible.map((skill, i) => (
+            <Reveal key={skill.name} from="scale" delay={i * 0.035} duration={0.55}>
+              <SkillCell skill={skill} index={i} />
+            </Reveal>
+          ))}
+        </Grid>
+      </Box>
+    </Box>
+  );
 };
 
 export default SkillsSection;
