@@ -12,7 +12,7 @@ export const ACID_INK = "var(--acid-ink)";
 
 const theme = extendTheme({
   config: {
-    initialColorMode: "light",
+    initialColorMode: "dark",
     useSystemColorMode: false,
   },
 

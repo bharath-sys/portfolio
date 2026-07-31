@@ -24,8 +24,6 @@
   --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
 }
 
-/* Light is the default palette (:root), dark is opt-in via the toggle. */
-:root,
 body.chakra-ui-light {
   --bg: #f3f3ef;
   --bg-alt: #e9e9e2;
@@ -45,6 +43,8 @@ body.chakra-ui-light {
   --scanline-opacity: 0.014;
 }
 
+/* Dark is the default palette (:root); light is opt-in via the toggle. */
+:root,
 body.chakra-ui-dark {
   --bg: #08080a;
   --bg-alt: #0d0d10;
